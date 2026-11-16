@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loop &amp; Logic Quiz</title>
+<meta name="description" content="A 12-question interactive Grade 7 quiz on loops and conditionals, with coding blocks, Python and a robot problem.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Lexend:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root { color-scheme: light; } body { margin: 0; } [hidden] { display: none !important; }
+/* Layout: one focused column; a "code card" (blocks or Python) sits above the answer area, with result pips tracking progress across the top. */
+:root {
+  --bg: #F2F4F9;
+  --surface: #FFFFFF;
+  --ink: #1A2033;
+  --muted: #586079;
+  --line: #D8DDE9;
+  --accent: #0B7A75;
+  --accent-ink: #FFFFFF;
+  --good: #1E8445;
+  --good-soft: #E3F4E8;
+  --bad: #C0362C;
+  --bad-soft: #FBE6E3;
+  --code-bg: #F7F8FC;
+  --slot: #FFFFFF;
+  --slot-ink: #1A2033;
+  --blk-ctl: #B86A00;
+  --blk-mot: #3B67D1;
+  --blk-var: #C7502A;
+  --blk-snd: #B03C8C;
+  --blk-sen: #12808F;
+  --blk-evt: #8A6A00;
+  --py-kw: #A0388A;
+  --py-fn: #2457C5;
+  --py-num: #A2580B;
+  --py-str: #1E7A3E;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11141D; --surface: #1A1F2C; --ink: #E7EAF2; --muted: #9AA2B8; --line: #2B3244;
+    --accent: #3CC2B6; --accent-ink: #062B28;
+    --good: #5CCB7E; --good-soft: #17301F; --bad: #FF7A6E; --bad-soft: #3A1C1A;
+    --code-bg: #141925; --slot: #F2F4F9; --slot-ink: #1A2033;
+    --blk-ctl: #B86A00; --blk-mot: #3B67D1; --blk-var: #C7502A; --blk-snd: #B03C8C; --blk-sen: #12808F; --blk-evt: #8A6A00;
+    --py-kw: #E38AD0; --py-fn: #7FA8FF; --py-num: #F0AE62; --py-str: #7ED69A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11141D; --surface: #1A1F2C; --ink: #E7EAF2; --muted: #9AA2B8; --line: #2B3244;
+  --accent: #3CC2B6; --accent-ink: #062B28;
+  --good: #5CCB7E; --good-soft: #17301F; --bad: #FF7A6E; --bad-soft: #3A1C1A;
+  --code-bg: #141925; --slot: #F2F4F9; --slot-ink: #1A2033;
+  --blk-ctl: #B86A00; --blk-mot: #3B67D1; --blk-var: #C7502A; --blk-snd: #B03C8C; --blk-sen: #12808F; --blk-evt: #8A6A00;
+  --py-kw: #E38AD0; --py-fn: #7FA8FF; --py-num: #F0AE62; --py-str: #7ED69A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+header { display: flex; flex-direction: column; gap: 12px; }
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.7rem, 5vw, 2.3rem); line-height: 1.1; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1 .amp { color: var(--blk-ctl); }
+.meta { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.meta b { color: var(--ink); font-weight: 600; }
+
+.pips { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; }
+.pip { height: 8px; border-radius: 4px; background: var(--line); transition: background .25s; }
+.pip.now { background: var(--accent); }
+.pip.ok { background: var(--good); }
+.pip.no { background: var(--bad); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: clamp(18px, 4vw, 28px); display: flex; flex-direction: column; gap: 18px; }
+.qhead { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tag { font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.tag.loops { color: var(--blk-ctl); border-color: currentColor; }
+.tag.cond { color: var(--accent); border-color: currentColor; }
+.qnum { font-family: var(--f-mono); font-size: .8rem; color: var(--muted); margin-left: auto; }
+.prompt { font-family: var(--f-display); font-weight: 600; font-size: clamp(1.15rem, 3.4vw, 1.4rem); line-height: 1.3; margin: 0; text-wrap: balance; }
+
+/* code frame */
+.code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.code-label { font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 7px 14px; border-bottom: 1px solid var(--line); }
+.code-body { padding: 16px; overflow-x: auto; }
+pre.py { margin: 0; font-family: var(--f-mono); font-size: .95rem; line-height: 1.7; color: var(--ink); }
+.kw { color: var(--py-kw); font-weight: 600; }
+.fn { color: var(--py-fn); }
+.num { color: var(--py-num); }
+.str { color: var(--py-str); }
+
+/* blocks */
+.blocks { display: flex; flex-direction: column; gap: 3px; width: max-content; font-size: .95rem; font-weight: 600; color: #fff; }
+.blk, .cblk > .top { background: var(--b); padding: 7px 12px; border-radius: 6px; display: flex; align-items: center; gap: .45em; white-space: nowrap; }
+.blk { width: max-content; }
+.hat { border-radius: 18px 18px 6px 6px; padding-top: 10px; }
+.cblk { display: flex; flex-direction: column; width: max-content; }
+.cblk > .top { border-radius: 6px 6px 6px 0; }
+.cblk > .top.else { border-radius: 0 6px 6px 0; padding-block: 4px; }
+.cblk > .mid { border-left: 16px solid var(--b); padding: 3px 0 3px 4px; display: flex; flex-direction: column; gap: 3px; min-height: 12px; }
+.cblk > .bot { background: var(--b); height: 14px; border-radius: 0 6px 6px 6px; width: 72px; }
+.ctl { --b: var(--blk-ctl); } .mot { --b: var(--blk-mot); } .var { --b: var(--blk-var); }
+.snd { --b: var(--blk-snd); } .sen { --b: var(--blk-sen); } .evt { --b: var(--blk-evt); }
+.slot { background: var(--slot); color: var(--slot-ink); border-radius: 999px; padding: 0 .6em; font-weight: 600; }
+.bool { background: rgba(0,0,0,.22); border-radius: 4px; padding: 1px .6em; display: inline-flex; gap: .35em; align-items: center; }
+
+/* answers */
+.options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .options { grid-template-columns: 1fr; } }
+.opt {
+  font: inherit; font-size: .98rem; text-align: left; color: var(--ink);
+  background: var(--surface); border: 2px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; cursor: pointer; display: flex; gap: 10px; align-items: flex-start;
+  transition: border-color .15s, background .15s, transform .1s;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:active:not(:disabled) { transform: scale(.99); }
+.opt:focus-visible, .btn:focus-visible, .numrow input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.opt .key { font-family: var(--f-mono); font-size: .8rem; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 5px; padding: 0 6px; flex: none; margin-top: 2px; }
+.opt .txt { min-width: 0; }
+.opt code, .fb code, .review code { font-family: var(--f-mono); font-size: .9em; }
+.opt:disabled { cursor: default; }
+.opt.right { border-color: var(--good); background: var(--good-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt:disabled:not(.right):not(.wrong) { opacity: .6; }
+
+.numrow { display: flex; gap: 10px; flex-wrap: wrap; }
+.numrow input {
+  font: inherit; font-family: var(--f-mono); font-size: 1.15rem; width: 9ch; padding: 10px 12px;
+  border: 2px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink);
+}
+.numrow input.right { border-color: var(--good); background: var(--good-soft); }
+.numrow input.wrong { border-color: var(--bad); background: var(--bad-soft); }
+
+.btn {
+  font: inherit; font-weight: 600; cursor: pointer; border: none; border-radius: 10px;
+  padding: 11px 20px; background: var(--accent); color: var(--accent-ink);
+}
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.ghost { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
+
+.fb { border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; border: 1px solid; }
+.fb.ok { background: var(--good-soft); border-color: var(--good); }
+.fb.no { background: var(--bad-soft); border-color: var(--bad); }
+.fb strong { font-family: var(--f-display); font-size: 1.1rem; }
+.fb.ok strong { color: var(--good); }
+.fb.no strong { color: var(--bad); }
+.fb p { margin: 0; }
+.actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.hint { font-size: .8rem; color: var(--muted); }
+
+/* results */
+.score { font-family: var(--f-display); font-weight: 800; font-size: clamp(3rem, 12vw, 4.5rem); line-height: 1; font-variant-numeric: tabular-nums; }
+.score small { font-size: .4em; color: var(--muted); font-weight: 600; }
+.topics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 520px) { .topics { grid-template-columns: 1fr; } }
+.topic { display: flex; flex-direction: column; gap: 6px; }
+.topic .row { display: flex; justify-content: space-between; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.bar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 5px; }
+.review { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.review li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+.review .mark { font-weight: 800; font-family: var(--f-display); text-align: center; }
+.review .mark.ok { color: var(--good); } .review .mark.no { color: var(--bad); }
+.review .sub { color: var(--muted); font-size: .85rem; }
+h2 { font-family: var(--f-display); font-size: 1.15rem; margin: 0; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+.enter { animation: rise .25s ease-out; }
+@keyframes rise { from { transform: translateY(6px); } to { transform: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Loop <span class="amp">&amp;</span> Logic Quiz</h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="pips" id="pips" aria-hidden="true"></div>
+  </header>
+  <main id="app" aria-live="polite"></main>
+</div>
+
+<script>
+// ---------- block helpers ----------
+const S = v => `<span class="slot">${v}</span>`;
+const BO = v => `<span class="bool">${v}</span>`;
+const B = (cls, html) => `<div class="blk ${cls}">${html}</div>`;
+const HAT = html => `<div class="blk evt hat">${html}</div>`;
+const C = (cls, head, inner, elseInner) =>
+  `<div class="cblk ${cls}"><div class="top">${head}</div><div class="mid">${inner}</div>` +
+  (elseInner !== undefined ? `<div class="top else">else</div><div class="mid">${elseInner}</div>` : '') +
+  `<div class="bot"></div></div>`;
+const blocks = (...b) => ({ kind: 'Blocks', html: `<div class="blocks">${b.join('')}</div>` });
+const py = src => ({ kind: 'Python', html: `<pre class="py">${src}</pre>` });
+
+// ---------- questions ----------
+const BANK = [
+  {
+    topics: ['Loops'], type: 'num',
+    prompt: 'How many steps does the sprite move in total?',
+    code: blocks(HAT('when started'), C('ctl', `repeat ${S(4)}`, B('mot', `move ${S(10)} steps`))),
+    answer: 40,
+    explain: 'The loop runs the <b>move 10 steps</b> block 4 times. 4 × 10 = <b>40</b> steps.'
+  },
+  {
+    topics: ['Loops'], type: 'mc',
+    prompt: 'What is the LAST number this program prints?',
+    code: py(`<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>):
+    <span class="fn">print</span>(i)`),
+    options: ['5', '4', '6', '0'], answer: 1,
+    explain: '<code>range(5)</code> counts 0, 1, 2, 3, 4. That is five numbers, but counting starts at 0, so the last one is <b>4</b>.'
+  },
+  {
+    topics: ['Conditionals'], type: 'mc',
+    prompt: 'The temperature is exactly 30. What does the sprite say?',
+    code: blocks(
+      B('var', `set ${S('temperature')} to ${S(30)}`),
+      C('ctl', `if ${BO(`${S('temperature')} &gt; ${S(30)}`)} then`, B('snd', `say ${S('Hot!')}`), B('snd', `say ${S('Cool')}`))
+    ),
+    options: ['Hot!', 'Cool', 'Hot! and then Cool', 'Nothing'], answer: 1,
+    explain: '<code>30 &gt; 30</code> is <b>false</b>, because 30 is equal to 30, not bigger than it. When the condition is false, the <b>else</b> part runs, so the sprite says <b>Cool</b>.'
+  },
+  {
+    topics: ['Loops'], type: 'num',
+    prompt: 'What number does the sprite say at the end?',
+    code: blocks(
+      B('var', `set ${S('score')} to ${S(0)}`),
+      C('ctl', `repeat ${S(5)}`, B('var', `change ${S('score')} by ${S(2)}`)),
+      B('snd', `say ${S('score')}`)
+    ),
+    answer: 10,
+    explain: 'The score starts at 0 and goes up by 2 five times: 2, 4, 6, 8, <b>10</b>.'
+  },
+  {
+    topics: ['Conditionals'], type: 'mc',
+    prompt: 'What does this program print?',
+    code: py(`x = <span class="num">7</span>
+<span class="kw">if</span> x % <span class="num">2</span> == <span class="num">0</span>:
+    <span class="fn">print</span>(<span class="str">"even"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"odd"</span>)`),
+    options: ['even', 'odd', 'even and odd', 'An error'], answer: 1,
+    explain: '<code>%</code> gives the remainder after dividing. 7 ÷ 2 = 3 remainder <b>1</b>. 1 is not 0, so the condition is false and the program prints <b>odd</b>.'
+  },
+  {
+    topics: ['Loops', 'Conditionals'], type: 'mc',
+    prompt: 'A robot must drive forward and stop before it hits a wall. Its distance sensor measures how far away the wall is. Which script works?',
+    code: blocks(HAT('when started'), B('sen', `distance sensor → ${S('? cm')}`)),
+    options: [
+      '<code>repeat until</code> distance &lt; 10 cm → move forward',
+      '<code>repeat 10</code> → move forward',
+      '<code>forever</code> → move forward',
+      '<code>if</code> distance &lt; 10 cm → move forward'
+    ], answer: 0,
+    explain: '<b>repeat until</b> checks the sensor every time round the loop and stops as soon as the wall is closer than 10 cm. <code>repeat 10</code> ignores the wall, <code>forever</code> never stops, and the <code>if</code> only checks once.'
+  },
+  {
+    topics: ['Loops'], type: 'num',
+    prompt: 'A loop inside a loop! How many times does the beep play?',
+    code: blocks(C('ctl', `repeat ${S(3)}`, C('ctl', `repeat ${S(2)}`, B('snd', 'play sound beep')))),
+    answer: 6,
+    explain: 'The inner loop plays 2 beeps. The outer loop runs the inner loop 3 times. 3 × 2 = <b>6</b> beeps.'
+  },
+  {
+    topics: ['Conditionals'], type: 'mc',
+    prompt: 'What does this program print?',
+    code: py(`age = <span class="num">12</span>
+has_ticket = <span class="kw">True</span>
+
+<span class="kw">if</span> age >= <span class="num">13</span> <span class="kw">and</span> has_ticket:
+    <span class="fn">print</span>(<span class="str">"Enjoy the movie!"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"Sorry, not today"</span>)`),
+    options: ['Enjoy the movie!', 'Sorry, not today', 'Both messages', 'Nothing'], answer: 1,
+    explain: 'With <code>and</code>, <b>both</b> parts must be true. The person has a ticket, but 12 is not ≥ 13, so the whole condition is false: <b>Sorry, not today</b>.'
+  },
+  {
+    topics: ['Loops'], type: 'num',
+    prompt: 'What number gets printed?',
+    code: py(`count = <span class="num">0</span>
+<span class="kw">while</span> count < <span class="num">3</span>:
+    count = count + <span class="num">1</span>
+<span class="fn">print</span>(count)`),
+    answer: 3,
+    explain: 'count goes 0 → 1 → 2 → 3. When count is 3, <code>3 &lt; 3</code> is false, so the loop stops and <b>3</b> is printed.'
+  },
+  {
+    topics: ['Conditionals'], type: 'mc',
+    prompt: 'A learner scored 75. Which grade is printed?',
+    code: py(`mark = <span class="num">75</span>
+<span class="kw">if</span> mark >= <span class="num">80</span>:
+    <span class="fn">print</span>(<span class="str">"A"</span>)
+<span class="kw">elif</span> mark >= <span class="num">60</span>:
+    <span class="fn">print</span>(<span class="str">"B"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"C"</span>)`),
+    options: ['A', 'B', 'C', 'B and C'], answer: 1,
+    explain: '75 ≥ 80 is false, so the program checks the next condition. 75 ≥ 60 is true, so it prints <b>B</b> and skips the rest. An if/elif/else chain only ever runs <b>one</b> branch.'
+  },
+  {
+    topics: ['Loops'], type: 'mc',
+    prompt: 'This script should draw a square, but it only draws 3 sides. How do you fix it?',
+    code: blocks(
+      HAT('when started'), B('mot', 'pen down'),
+      C('ctl', `repeat ${S(3)}`, B('mot', `move ${S(50)} steps`) + B('mot', `turn right ${S(90)} degrees`))
+    ),
+    options: ['Change <code>repeat 3</code> to <code>repeat 4</code>', 'Change 90 degrees to 60 degrees', 'Change 50 steps to 40 steps', 'Take the turn block out'], answer: 0,
+    explain: 'A square has <b>4</b> equal sides and 4 right-angle (90°) turns, so the loop has to run 4 times. Finding and fixing a mistake like this is called <b>debugging</b>.'
+  },
+  {
+    topics: ['Loops'], type: 'mc',
+    prompt: 'Which of these loops will NEVER stop on its own?',
+    code: null,
+    options: [
+      '<code>repeat 10</code>',
+      '<code>forever</code>',
+      '<code>for i in range(100)</code>',
+      '<code>repeat until score = 5</code>, where the score goes up by 1 each time, starting at 0'
+    ], answer: 1,
+    explain: 'A <b>forever</b> loop keeps going until you stop the program. The others all have an end: 10 times, 100 times, or until the score reaches 5.'
+  }
+];
+
+// ---------- state ----------
+let Q = [];
+function shuffled() {
+  const order = BANK.map((_, k) => k);
+  for (let k = order.length - 1; k > 0; k--) {
+    const j = Math.floor(Math.random() * (k + 1));
+    [order[k], order[j]] = [order[j], order[k]];
+  }
+  return order;
+}
+function newRun() {
+  const order = shuffled();
+  Q = order.map(k => BANK[k]);
+  return { i: 0, answers: [], order };
+}
+let state = newRun();
+const app = document.getElementById('app');
+const meta = document.getElementById('meta');
+const pips = document.getElementById('pips');
+
+function correctCount() { return state.answers.filter(a => a && a.correct).length; }
+
+function renderChrome() {
+  const done = state.i >= Q.length;
+  meta.innerHTML = done
+    ? `Finished · <b>${correctCount()}</b> / ${Q.length} correct`
+    : `Question <b>${state.i + 1}</b> of ${Q.length} · Score <b>${correctCount()}</b>`;
+  pips.innerHTML = Q.map((_, k) => {
+    const a = state.answers[k];
+    const cls = a ? (a.correct ? 'ok' : 'no') : (k === state.i ? 'now' : '');
+    return `<div class="pip ${cls}"></div>`;
+  }).join('');
+}
+
+function tagHtml(t) { return `<span class="tag ${t === 'Loops' ? 'loops' : 'cond'}">${t}</span>`; }
+
+function renderQuestion() {
+  const q = Q[state.i];
+  const a = state.answers[state.i];
+  const answered = !!a;
+  let answerHtml = '';
+  if (q.type === 'mc') {
+    answerHtml = `<div class="options" role="group" aria-label="Answer choices">` + q.options.map((o, k) => {
+      let cls = '';
+      if (answered) { if (k === q.answer) cls = 'right'; else if (k === a.given) cls = 'wrong'; }
+      return `<button class="opt ${cls}" id="opt-${state.i}-${k}" data-k="${k}" ${answered ? 'disabled' : ''}><span class="key">${'ABCD'[k]}</span><span class="txt">${o}</span></button>`;
+    }).join('') + `</div>`;
+  } else {
+    const cls = answered ? (a.correct ? 'right' : 'wrong') : '';
+    answerHtml = `<form class="numrow" id="numform">
+      <label for="num-${state.i}" class="hint" style="flex-basis:100%">Type a number</label>
+      <input id="num-${state.i}" type="number" inputmode="numeric" class="${cls}" ${answered ? `value="${a.given}" disabled` : ''} autocomplete="off">
+      <button class="btn" type="submit" ${answered ? 'disabled' : ''}>Check</button>
+    </form>`;
+  }
+  let fb = '';
+  if (answered) {
+    const correctText = q.type === 'mc' ? q.options[q.answer] : q.answer;
+    fb = `<div class="fb ${a.correct ? 'ok' : 'no'}">
+      <strong>${a.correct ? 'Correct!' : 'Not quite'}</strong>
+      ${a.correct ? '' : `<p>The answer is <b>${correctText}</b>.</p>`}
+      <p>${q.explain}</p>
+    </div>
+    <div class="actions"><button class="btn" id="next">${state.i === Q.length - 1 ? 'See my results' : 'Next question →'}</button></div>`;
+  } else if (q.type === 'mc') {
+    fb = `<div class="hint">Tip: press A, B, C or D on your keyboard.</div>`;
+  }
+  app.innerHTML = `<section class="card enter">
+    <div class="qhead">${q.topics.map(tagHtml).join('')}<span class="qnum">Q${String(state.i + 1).padStart(2, '0')}</span></div>
+    <p class="prompt">${q.prompt}</p>
+    ${q.code ? `<div class="code"><div class="code-label">${q.code.kind}</div><div class="code-body">${q.code.html}</div></div>` : ''}
+    ${answerHtml}
+    ${fb}
+  </section>`;
+
+  app.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => answer(+b.dataset.k)));
+  const form = document.getElementById('numform');
+  if (form) form.addEventListener('submit', e => {
+    e.preventDefault();
+    const v = document.getElementById(`num-${state.i}`).value.trim();
+    if (v === '') return;
+    answer(Number(v));
+  });
+  const next = document.getElementById('next');
+  if (next) next.addEventListener('click', () => { state.i++; render(); window.scrollTo({ top: 0 }); });
+  if (answered && next) next.focus();
+  else if (form && !answered) document.getElementById(`num-${state.i}`).focus({ preventScroll: true });
+}
+
+function answer(given) {
+  if (state.answers[state.i]) return;
+  const q = Q[state.i];
+  state.answers[state.i] = { given, correct: given === q.answer };
+  render();
+}
+
+function renderResults() {
+  const n = correctCount();
+  const pct = n / Q.length;
+  const msg = pct === 1 ? 'Perfect score! You think like a programmer.'
+    : pct >= .75 ? 'Great work. You understand loops and conditions well.'
+    : pct >= .5 ? 'Good effort. Check the explanations below and try again.'
+    : 'Keep practising. Go through each explanation, then have another go.';
+  const topics = ['Loops', 'Conditionals'].map(t => {
+    const idx = Q.map((q, k) => q.topics.includes(t) ? k : -1).filter(k => k >= 0);
+    const ok = idx.filter(k => state.answers[k]?.correct).length;
+    const color = t === 'Loops' ? 'var(--blk-ctl)' : 'var(--accent)';
+    return `<div class="topic"><div class="row"><span>${t}</span><span>${ok} / ${idx.length}</span></div>
+      <div class="bar"><i style="width:${(ok / idx.length) * 100}%;background:${color}"></i></div></div>`;
+  }).join('');
+  const review = Q.map((q, k) => {
+    const a = state.answers[k];
+    const right = q.type === 'mc' ? q.options[q.answer] : q.answer;
+    const gave = a ? (q.type === 'mc' ? q.options[a.given] : a.given) : '—';
+    return `<li><span class="mark ${a?.correct ? 'ok' : 'no'}">${a?.correct ? '✓' : '✗'}</span>
+      <div><div>${k + 1}. ${q.prompt}</div>
+      <div class="sub">${a?.correct ? `Your answer: ${gave}` : `You said ${gave} · Answer: ${right}`}</div></div></li>`;
+  }).join('');
+  app.innerHTML = `<section class="card enter">
+    <div class="score">${n}<small> / ${Q.length}</small></div>
+    <p class="prompt">${msg}</p>
+    <div class="topics">${topics}</div>
+    <h2>Your answers</h2>
+    <ul class="review">${review}</ul>
+    <div class="actions"><button class="btn" id="again">Try again</button></div>
+  </section>`;
+  document.getElementById('again').addEventListener('click', () => { state = newRun(); render(); window.scrollTo({ top: 0 }); });
+}
+
+function render() {
+  renderChrome();
+  if (state.i >= Q.length) renderResults(); else renderQuestion();
+}
+
+document.addEventListener('keydown', e => {
+  if (state.i >= Q.length || e.target.tagName === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey) return;
+  const q = Q[state.i];
+  const k = 'abcd'.indexOf(e.key.toLowerCase());
+  if (q.type === 'mc' && k >= 0 && k < q.options.length && !state.answers[state.i]) answer(k);
+});
+
+render();
+</script>
+</body>
+</html>
