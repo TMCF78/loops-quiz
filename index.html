@@ -178,6 +178,21 @@ pre.py { margin: 0; font-family: var(--f-mono); font-size: .95rem; line-height: 
 .review .sub { color: var(--muted); font-size: .85rem; }
 h2 { font-family: var(--f-display); font-size: 1.15rem; margin: 0; }
 
+/* start screen + score sending */
+.lead { margin: 0; color: var(--muted); max-width: 60ch; }
+.startform { display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-weight: 600; font-size: .9rem; }
+.field input {
+  font: inherit; padding: 11px 12px; width: 100%; max-width: 22rem;
+  border: 2px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink);
+}
+.field input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.err { margin: 0; color: var(--bad); font-weight: 500; }
+.send { border-radius: 10px; padding: 12px 14px; border: 1px solid var(--line); display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: .95rem; }
+.send.sent { border-color: var(--good); background: var(--good-soft); }
+.send.failed { border-color: var(--bad); background: var(--bad-soft); }
+
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 .enter { animation: rise .25s ease-out; }
 @keyframes rise { from { transform: translateY(6px); } to { transform: none; } }
@@ -346,12 +361,24 @@ function shuffled() {
   }
   return order;
 }
-function newRun() {
+// ---------- class scoreboard: results go to the teacher's Google Form ----------
+const FORM = {
+  url: 'https://docs.google.com/forms/d/e/1FAIpQLScYcSC8x94XLJ7_qLUHYD0T1FCn1_RhY6CH0yQtYTL2H8WvyA/formResponse',
+  name: 'entry.279929282',
+  cls: 'entry.105057245',
+  score: 'entry.1968552884',
+  loops: 'entry.1969994597',
+  cond: 'entry.1089552128'
+};
+
+function newRun(student) {
   const order = shuffled();
   Q = order.map(k => BANK[k]);
-  return { i: 0, answers: [], order };
+  return { stage: 'quiz', i: 0, answers: [], order, name: student.name, cls: student.cls, send: 'idle' };
 }
-let state = newRun();
+let state = { stage: 'start', i: 0, answers: [], order: [], name: '', cls: '', send: 'idle' };
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = document.getElementById('app');
 const meta = document.getElementById('meta');
 const pips = document.getElementById('pips');
@@ -359,15 +386,97 @@ const pips = document.getElementById('pips');
 function correctCount() { return state.answers.filter(a => a && a.correct).length; }
 
 function renderChrome() {
+  if (state.stage === 'start') {
+    meta.innerHTML = `${BANK.length} questions`;
+    pips.innerHTML = BANK.map(() => `<div class="pip"></div>`).join('');
+    return;
+  }
   const done = state.i >= Q.length;
+  const who = `<b>${esc(state.name)}</b> (${esc(state.cls)})`;
   meta.innerHTML = done
-    ? `Finished · <b>${correctCount()}</b> / ${Q.length} correct`
-    : `Question <b>${state.i + 1}</b> of ${Q.length} · Score <b>${correctCount()}</b>`;
+    ? `${who} · Finished · <b>${correctCount()}</b> / ${Q.length} correct`
+    : `${who} · Question <b>${state.i + 1}</b> of ${Q.length} · Score <b>${correctCount()}</b>`;
   pips.innerHTML = Q.map((_, k) => {
     const a = state.answers[k];
     const cls = a ? (a.correct ? 'ok' : 'no') : (k === state.i ? 'now' : '');
     return `<div class="pip ${cls}"></div>`;
   }).join('');
+}
+
+function renderStart() {
+  // Only the class is remembered on this device, never the name, so the next learner on a shared computer types their own.
+  let savedClass = '';
+  try { savedClass = localStorage.getItem('llq-class') || ''; } catch (e) {}
+  app.innerHTML = `<section class="card enter">
+    <p class="prompt">Before you start</p>
+    <p class="lead">There are ${BANK.length} questions on loops and conditionals. Type your first name and class so your teacher can see your score at the end.</p>
+    <form id="startform" class="startform" novalidate>
+      <div class="field">
+        <label for="student-name">First name</label>
+        <input id="student-name" type="text" maxlength="30" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="student-class">Class</label>
+        <input id="student-class" type="text" maxlength="15" autocomplete="off" placeholder="For example 7A" value="${esc(savedClass)}">
+      </div>
+      <p class="err" id="start-err" hidden></p>
+      <div class="actions"><button class="btn" type="submit">Start quiz →</button></div>
+    </form>
+  </section>`;
+  const nameEl = document.getElementById('student-name');
+  const classEl = document.getElementById('student-class');
+  const err = document.getElementById('start-err');
+  document.getElementById('startform').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = nameEl.value.trim().replace(/\s+/g, ' ');
+    const cls = classEl.value.trim().replace(/\s+/g, ' ');
+    if (!name) { err.textContent = 'Type your first name to start.'; err.hidden = false; nameEl.focus(); return; }
+    if (!cls) { err.textContent = 'Type your class to start, for example 7A.'; err.hidden = false; classEl.focus(); return; }
+    try { localStorage.setItem('llq-class', cls); } catch (e) {}
+    state = newRun({ name, cls });
+    render();
+    window.scrollTo({ top: 0 });
+  });
+  nameEl.focus({ preventScroll: true });
+}
+
+function topicScore(t) {
+  const idx = Q.map((q, k) => q.topics.includes(t) ? k : -1).filter(k => k >= 0);
+  return { ok: idx.filter(k => state.answers[k]?.correct).length, total: idx.length };
+}
+
+async function sendScore() {
+  const run = state;
+  if (run.send === 'sending' || run.send === 'sent') return;
+  run.send = 'sending';
+  updateSend();
+  const body = new URLSearchParams();
+  body.append(FORM.name, run.name);
+  body.append(FORM.cls, run.cls);
+  body.append(FORM.score, String(correctCount()));
+  body.append(FORM.loops, String(topicScore('Loops').ok));
+  body.append(FORM.cond, String(topicScore('Conditionals').ok));
+  try {
+    // Google Forms doesn't let other websites read its reply, so a finished request is treated as sent.
+    await fetch(FORM.url, { method: 'POST', mode: 'no-cors', body });
+    run.send = 'sent';
+  } catch (e) {
+    run.send = 'failed';
+  }
+  if (run === state) updateSend();
+}
+
+function updateSend() {
+  const el = document.getElementById('sendstatus');
+  if (!el) return;
+  el.className = `send ${state.send}`;
+  if (state.send === 'sending') el.innerHTML = `<span>Sending your score to your teacher…</span>`;
+  else if (state.send === 'sent') el.innerHTML = `<span>✓ Your score has been sent to your teacher.</span>`;
+  else if (state.send === 'failed') {
+    el.innerHTML = `<span>Your score couldn't be sent. Check the internet connection, then try again.</span>
+      <button class="btn" id="resend" type="button">Send again</button>`;
+    document.getElementById('resend').addEventListener('click', () => { state.send = 'idle'; sendScore(); });
+  }
 }
 
 function tagHtml(t) { return `<span class="tag ${t === 'Loops' ? 'loops' : 'cond'}">${t}</span>`; }
@@ -440,11 +549,10 @@ function renderResults() {
     : pct >= .5 ? 'Good effort. Check the explanations below and try again.'
     : 'Keep practising. Go through each explanation, then have another go.';
   const topics = ['Loops', 'Conditionals'].map(t => {
-    const idx = Q.map((q, k) => q.topics.includes(t) ? k : -1).filter(k => k >= 0);
-    const ok = idx.filter(k => state.answers[k]?.correct).length;
+    const { ok, total } = topicScore(t);
     const color = t === 'Loops' ? 'var(--blk-ctl)' : 'var(--accent)';
-    return `<div class="topic"><div class="row"><span>${t}</span><span>${ok} / ${idx.length}</span></div>
-      <div class="bar"><i style="width:${(ok / idx.length) * 100}%;background:${color}"></i></div></div>`;
+    return `<div class="topic"><div class="row"><span>${t}</span><span>${ok} / ${total}</span></div>
+      <div class="bar"><i style="width:${(ok / total) * 100}%;background:${color}"></i></div></div>`;
   }).join('');
   const review = Q.map((q, k) => {
     const a = state.answers[k];
@@ -458,16 +566,21 @@ function renderResults() {
     <div class="score">${n}<small> / ${Q.length}</small></div>
     <p class="prompt">${msg}</p>
     <div class="topics">${topics}</div>
+    <div class="send" id="sendstatus" role="status"></div>
     <h2>Your answers</h2>
     <ul class="review">${review}</ul>
     <div class="actions"><button class="btn" id="again">Try again</button></div>
   </section>`;
-  document.getElementById('again').addEventListener('click', () => { state = newRun(); render(); window.scrollTo({ top: 0 }); });
+  document.getElementById('again').addEventListener('click', () => { state = newRun(state); render(); window.scrollTo({ top: 0 }); });
+  updateSend();
+  sendScore();
 }
 
 function render() {
   renderChrome();
-  if (state.i >= Q.length) renderResults(); else renderQuestion();
+  if (state.stage === 'start') renderStart();
+  else if (state.i >= Q.length) renderResults();
+  else renderQuestion();
 }
 
 document.addEventListener('keydown', e => {

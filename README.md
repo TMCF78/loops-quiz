@@ -16,6 +16,21 @@ Code appears in two forms: **coding blocks** and **Python**.
 
 Learners get instant feedback with an explanation after every answer. The results screen shows their score per topic and every question with the correct answer.
 
+## Class scoreboard
+
+Before starting, learners type their **first name** and **class**. When they finish, the quiz sends their result to the teacher's Google Form, which saves it to a Google Sheet that only the teacher can see.
+
+| Column | Meaning |
+|---|---|
+| Name, Class | What the learner typed |
+| Score | Correct answers out of 12 |
+| Loops | Correct answers out of 8 loop questions |
+| Conditionals | Correct answers out of 5 conditional questions |
+
+The robot question counts in both Loops and Conditionals. Every attempt is saved as a new row with a timestamp.
+
+To connect the quiz to a different form, change the `FORM` settings in `index.html`.
+
 ## How it works
 
 The whole quiz is one file, `index.html`. It doesn't need any installation or a server. To edit the questions, change the `BANK` list near the bottom of the file.
